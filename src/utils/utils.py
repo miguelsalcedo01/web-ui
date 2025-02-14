@@ -19,7 +19,8 @@ PROVIDER_DISPLAY_NAMES = {
     "azure_openai": "Azure OpenAI",
     "anthropic": "Anthropic",
     "deepseek": "DeepSeek",
-    "google": "Google"
+    "google": "Google",
+    "alibaba": "Alibaba"
 }
 
 def get_llm_model(provider: str, **kwargs):
@@ -128,16 +129,29 @@ def get_llm_model(provider: str, **kwargs):
             base_url = os.getenv("AZURE_OPENAI_ENDPOINT", "")
         else:
             base_url = kwargs.get("base_url")
+        api_version = kwargs.get("api_version", "") or os.getenv("AZURE_OPENAI_API_VERSION", "2025-01-01-preview")
         return AzureChatOpenAI(
             model=kwargs.get("model_name", "gpt-4o"),
             temperature=kwargs.get("temperature", 0.0),
-            api_version="2024-05-01-preview",
+            api_version=api_version,
             azure_endpoint=base_url,
+            api_key=api_key,
+        )
+    elif provider == "alibaba":
+        if not kwargs.get("base_url", ""):
+            base_url = os.getenv("ALIBABA_ENDPOINT", "https://dashscope.aliyuncs.com/compatible-mode/v1")
+        else:
+            base_url = kwargs.get("base_url")
+
+        return ChatOpenAI(
+            model=kwargs.get("model_name", "qwen-plus"),
+            temperature=kwargs.get("temperature", 0.0),
+            base_url=base_url,
             api_key=api_key,
         )
     else:
         raise ValueError(f"Unsupported provider: {provider}")
-    
+
 # Predefined model names for common providers
 model_names = {
     "anthropic": ["claude-3-5-sonnet-20240620", "claude-3-opus-20240229"],
@@ -146,7 +160,8 @@ model_names = {
     "google": ["gemini-2.0-flash-exp", "gemini-2.0-flash-thinking-exp", "gemini-1.5-flash-latest", "gemini-1.5-flash-8b-latest", "gemini-2.0-flash-thinking-exp-01-21"],
     "ollama": ["qwen2.5:7b", "llama2:7b", "deepseek-r1:14b", "deepseek-r1:32b"],
     "azure_openai": ["gpt-4o", "gpt-4", "gpt-3.5-turbo"],
-    "mistral": ["pixtral-large-latest", "mistral-large-latest", "mistral-small-latest", "ministral-8b-latest"]
+    "mistral": ["pixtral-large-latest", "mistral-large-latest", "mistral-small-latest", "ministral-8b-latest"],
+    "alibaba": ["qwen-plus", "qwen-max", "qwen-turbo", "qwen-long"]
 }
 
 # Callback to update the model name dropdown based on the selected provider
